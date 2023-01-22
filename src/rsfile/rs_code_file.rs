@@ -5,8 +5,6 @@ pub struct RsCodeFile {
     pub content: Vec<String>,
 }
 
-
-
 impl RsCodeFile {
 
     pub fn new() -> RsCodeFile {
@@ -20,7 +18,6 @@ impl RsCodeFile {
     }
 
     pub fn print_content(&self) {
-        println!("the file");
         for c in &self.content {
             println!("{}", c);
         }
