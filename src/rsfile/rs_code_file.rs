@@ -15,15 +15,12 @@ impl RsCodeFile {
 
     pub fn read_file(&mut self, file_full_path: &str) -> Result<(), Box<dyn Error>> {
         let content = std::fs::read_to_string(file_full_path)?; 
-        let temp_lines: Vec<&str> = content.split("\n").collect();
-        self.content.reserve(temp_lines.len());
-        for s in temp_lines {
-            self.content.push(s.to_string());
-        }
+        self.content = content.split("\n").map(|s| -> String {s.to_string()}).collect();
         Ok(())
     }
 
     pub fn print_content(&self) {
+        println!("the file");
         for c in &self.content {
             println!("{}", c);
         }
