@@ -2,13 +2,14 @@ mod rsfile;
 mod config;
 
 use rsfile::rs_code_dir::RsCodeDir;
+use rsfile::rs_code_file::RsCodeFile;
 use std::error::Error;
 
 fn count_file(dir: &str) -> Result<(), Box<dyn Error>> {
     let mut rs_dir = RsCodeDir::new();
     rs_dir.process_rs_dir(dir)?;
 
-    println!("total line is {}", rs_dir.total_line);
+    println!("total line in directroy({}) is {}", dir, rs_dir.total_line);
 
     Ok(())
 }
@@ -17,7 +18,16 @@ fn accept_command() -> Result<(), Box<dyn Error>> {
     let mut config = config::RsCountConfig::new();
     config.parse_commands(&std::env::args().collect::<Vec<String>>());
 
-    count_file(&config.search_path)?;
+    if let Some(path_name) = &config.search_path {
+        count_file(&path_name)?;
+    }
+
+    if let Some(file_name) = &config.search_file {
+        let mut rs_file = RsCodeFile::new();
+        rs_file.process_rs_file(file_name)?;
+
+        println!("total line in file({}) is {}", file_name, rs_file.rs_code_line);
+    }
 
     Ok(())
 }

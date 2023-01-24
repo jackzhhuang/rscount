@@ -1,20 +1,25 @@
 pub struct RsCountConfig {
-    pub search_path: String,
+    pub search_path: Option<String>,
+    pub search_file: Option<String>,
 }
 
 impl RsCountConfig {
     pub fn new() -> RsCountConfig {
         RsCountConfig {
-            search_path: String::from("."),
+            search_path: None,
+            search_file: None,
         }
     }
 
     fn set_command(&mut self, command_name: &str, value: &str) {
         match command_name {
            "path" => {
-                self.search_path = value.to_string();
-                println!("set search path = {}", value);
+                self.search_path = Some(value.to_string());
            } 
+
+           "file" => {
+                self.search_file = Some(value.to_string());
+           }
 
            _ => {
                 panic!("unknown command: {}", command_name);
