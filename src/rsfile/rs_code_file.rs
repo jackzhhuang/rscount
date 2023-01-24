@@ -1,4 +1,4 @@
-use std::{path::Path, error::Error, fs, io, iter::Iterator};
+use std::{error::Error, iter::Iterator};
 
 // read rust source code file containing the content in line by line
 pub struct RsCodeFile {
@@ -62,7 +62,7 @@ impl RsCodeFile {
                     index += 2; // skip */
 
                     // check the content after */ which is the part of the source code
-                    self.check_line_left((&trim_line[index..trim_line.len()].trim()));
+                    self.check_line_left(&trim_line[index..trim_line.len()].trim());
                 }
             }         
         } else {
