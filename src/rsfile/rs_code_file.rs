@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::{path::Path, error::Error, fs, io, iter::Iterator};
 
 // read rust source code file containing the content in line by line
 pub struct RsCodeFile {
