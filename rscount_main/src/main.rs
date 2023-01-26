@@ -1,5 +1,5 @@
-mod rsfile;
-mod config;
+use rsfile;
+use rsconfig::config;
 
 use rsfile::rs_code_dir::RsCodeDir;
 use rsfile::rs_code_file::RsCodeFile;
