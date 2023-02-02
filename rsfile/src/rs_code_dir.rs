@@ -1,18 +1,33 @@
-use std::{path::Path, fs};
+use std::{path::Path, fs, sync::Mutex, sync::Arc};
 use super::rs_code_file::RsCodeFile;
 use std::error::Error;
-use rsthread_pool::rs_thread_pool::{RsThreadPool, RsReceiver};
+use rsthread_pool::rs_thread_pool::{RsThreadPool, RsCallBack};
+
+pub struct RsThreadCallback {
+    pub total_line: u32,
+}
+
+impl RsCallBack<RsCodeFile, String> for RsThreadCallback {
+    fn callback(&mut self, t: &RsCodeFile) -> Result<(), Box<dyn Error>> {
+        self.total_line += t.rs_code_line;
+        Ok(())
+    }
+}
 
 pub struct RsCodeDir {
     pub total_line: u32,
     thread_pool: Option<RsThreadPool<String>>,
+    thread_callback: Arc<Mutex<RsThreadCallback>>,
 }
+
+
 
 impl RsCodeDir {
     pub fn new() -> RsCodeDir {
         RsCodeDir { 
             total_line:0,
             thread_pool: None, 
+            thread_callback: Arc::new(Mutex::new(RsThreadCallback { total_line: 0 })),
         }
     }
 
@@ -20,12 +35,13 @@ impl RsCodeDir {
         self.thread_pool = Some(RsThreadPool::<String>::new());
         self.thread_pool.as_mut().unwrap().set_up_pool(|| {
             RsCodeFile::new()
-        });
+        }, &self.thread_callback)?;
         Ok(())
     }
     
     pub fn join(self) -> Result<(), Box<dyn Error>> {
         self.thread_pool.unwrap().join()?;
+        println!("total line is {}", self.thread_callback.as_ref().lock().unwrap().total_line);
         Ok(())
     }
 

@@ -30,7 +30,11 @@ fn accept_command() -> Result<Box<config::RsCountConfig>, Box<dyn Error>> {
 
 fn process_rsccount(config: Box<config::RsCountConfig>) -> Result<(), Box<dyn Error>> {
     if let Some(path_name) = &config.search_path {
-        count_file(&path_name, config.thread_pool.as_ref().unwrap().eq(&String::from("1")))?;
+        if let Some(thread_param) = &config.thread_pool {
+            count_file(&path_name, thread_param.eq(&String::from("1")))?;
+        } else {
+            count_file(&path_name, false)?;
+        }
     }
 
     if let Some(file_name) = &config.search_file {

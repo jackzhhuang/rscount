@@ -10,6 +10,12 @@ pub trait RsReceiver<MessageType> {
    fn process_message(&mut self, message: MessageType) -> Result<(), Box<dyn Error>>;
 }
 
+pub trait RsCallBack<T, MessageType> {
+   fn callback(&mut self, t: &T) -> Result<(), Box<dyn Error>> where T: RsReceiver<MessageType>;
+}
+
+
+
 pub struct RsThreadPool<MessageType: Send + 'static> {
     count_parallelism: usize,
     sender: Option<Sender<PoolMessage<MessageType>>>,
@@ -40,16 +46,20 @@ impl<MessageType: Send + 'static> RsThreadPool<MessageType> {
         for _i in 0..self.handles.len() {
             self.sender.as_ref().unwrap().send(PoolMessage { stop: true, message: None  })?;
         }
+
         self.handles.into_iter().for_each(|h| {
             h.join().unwrap();
         }); 
         Ok(())
     }
 
-    pub fn set_up_pool<F, ProcessorType>(&mut self, mut processor_maker: F) -> Result<(), Box<dyn Error>> 
+    pub fn set_up_pool<F, ProcessorType, CallbackType>(&mut self, 
+                                         mut processor_maker: F, 
+                                         mut callback: &Arc<Mutex<CallbackType>>) -> Result<(), Box<dyn Error>> 
             where F: FnMut() -> ProcessorType,
                   F: 'static,
-                  ProcessorType: RsReceiver<MessageType> + Send + 'static
+                  ProcessorType: RsReceiver<MessageType> + Send + 'static,
+                  CallbackType: RsCallBack<ProcessorType, MessageType> + Send + 'static
                   {
         self.determine_count_parallelism()?;
 
@@ -62,6 +72,7 @@ impl<MessageType: Send + 'static> RsThreadPool<MessageType> {
             let thread_receiver = Arc::clone(self.receiver.as_ref().unwrap());
 
             let mut processor = processor_maker();
+            let thread_callback = Arc::clone(callback);
             let handle = std::thread::spawn(move || {
                 loop {
                     let receiver_result = thread_receiver.try_lock();
@@ -71,6 +82,7 @@ impl<MessageType: Send + 'static> RsThreadPool<MessageType> {
                             match message_result {
                                 Ok(message) => {
                                     if message.stop {
+                                        thread_callback.as_ref().lock().unwrap().callback(&processor).unwrap();
                                         return;
                                     }
                                     processor.process_message(message.message.unwrap()).unwrap();

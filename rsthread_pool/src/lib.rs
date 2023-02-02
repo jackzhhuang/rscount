@@ -1,8 +1,10 @@
 use std::error::Error;
+use std::sync::{Arc, Mutex};
 
 pub mod rs_thread_pool;
 use rs_thread_pool::RsThreadPool;
 use rs_thread_pool::RsReceiver;
+use rs_thread_pool::RsCallBack;
 
 #[derive(Debug)]
 struct Person {
@@ -10,6 +12,7 @@ struct Person {
     name: String,
 }
 
+#[derive(Debug)]
 struct PersonProcess {
    process_num: i32, 
 }
@@ -30,13 +33,25 @@ impl RsReceiver<Person> for PersonProcess {
     }
 }
 
+struct TestCallback {
+
+}
+
+impl RsCallBack<PersonProcess, Person> for TestCallback {
+    fn callback(&mut self, t: &PersonProcess) -> Result<(), Box<dyn Error>> {
+        println!("print the processor itself: {:?}", t);
+        Ok(())
+    }
+}
+
 fn test_thread_pool() -> Result<(), Box<dyn Error>> {
     let mut pool = RsThreadPool::<Person>::new();
     let mut num = 0;
+    let callback = Arc::new(Mutex::new(TestCallback{}));
     pool.set_up_pool(move || {
         num += 1;
         PersonProcess::new(num)
-    });
+    }, &callback);
 
     pool.send(Person { age: 99, name: String::from("jack") })?;
     pool.send(Person { age: 199, name: String::from("rose") })?;
