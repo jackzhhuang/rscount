@@ -3,7 +3,7 @@ use std::{error::Error, sync::{mpsc::{Sender, Receiver}, Arc, Mutex}};
 
 pub struct PoolMessage<MessageType> {
     stop: bool,
-    message: MessageType,
+    message: Option<MessageType>,
 }
 
 pub trait RsReceiver<MessageType> {
@@ -12,19 +12,42 @@ pub trait RsReceiver<MessageType> {
 
 pub struct RsThreadPool<MessageType: Send + 'static> {
     count_parallelism: usize,
-    sender: Sender<PoolMessage<MessageType>>,
-    receiver: Arc<Mutex<Receiver<PoolMessage<MessageType>>>>,
+    sender: Option<Sender<PoolMessage<MessageType>>>,
+    receiver: Option<Arc<Mutex<Receiver<PoolMessage<MessageType>>>>>,
     handles: Vec<std::thread::JoinHandle<()>>,
 }
 
 impl<MessageType: Send + 'static> RsThreadPool<MessageType> {
+    pub fn new() -> RsThreadPool::<MessageType> {
+        RsThreadPool::<MessageType> { 
+            count_parallelism: 0, 
+            sender: None, 
+            receiver: None, 
+            handles: vec![],
+        }
+    }
     fn determine_count_parallelism(&mut self) -> Result<(), Box<dyn Error>>  {
         self.count_parallelism = std::thread::available_parallelism()?.get();
         Ok(())
     }
 
-    fn set_up_pool<F, ProcessorType>(&mut self, mut processor_maker: F) -> Result<(), Box<dyn Error>> 
-            where F: Fn() -> ProcessorType,
+    pub fn send(&self, m: MessageType) -> Result<(), Box<dyn Error>> {
+        self.sender.as_ref().unwrap().send(PoolMessage { stop: false, message: Some(m)  })?;
+        Ok(())
+    }
+
+    pub fn join(self) -> Result<(), Box<dyn Error>> {
+        for _i in 0..self.handles.len() {
+            self.sender.as_ref().unwrap().send(PoolMessage { stop: true, message: None  })?;
+        }
+        self.handles.into_iter().for_each(|h| {
+            h.join().unwrap();
+        }); 
+        Ok(())
+    }
+
+    pub fn set_up_pool<F, ProcessorType>(&mut self, mut processor_maker: F) -> Result<(), Box<dyn Error>> 
+            where F: FnMut() -> ProcessorType,
                   F: 'static,
                   ProcessorType: RsReceiver<MessageType> + Send + 'static
                   {
@@ -32,11 +55,11 @@ impl<MessageType: Send + 'static> RsThreadPool<MessageType> {
 
         let (sender, receiver) = std::sync::mpsc::channel::<PoolMessage<MessageType>>();
 
-        self.sender = sender;
-        self.receiver = Arc::new(Mutex::new(receiver));
+        self.sender = Some(sender);
+        self.receiver = Some(Arc::new(Mutex::new(receiver)));
 
-        for i in 0..self.count_parallelism {
-            let thread_receiver = Arc::clone(&self.receiver);
+        for _i in 0..self.count_parallelism {
+            let thread_receiver = Arc::clone(self.receiver.as_ref().unwrap());
 
             let mut processor = processor_maker();
             let handle = std::thread::spawn(move || {
@@ -50,15 +73,15 @@ impl<MessageType: Send + 'static> RsThreadPool<MessageType> {
                                     if message.stop {
                                         return;
                                     }
-                                    processor.process_message(message.message).unwrap();
+                                    processor.process_message(message.message.unwrap()).unwrap();
                                 },
-                                _ => {
-
+                                Err(e) => {
+                                    // dbg!("error: {}", e.to_string());
                                 },
                             }
                         },
-                        _ => {
-
+                        Err(e) => {
+                            // dbg!("error: {}", e.to_string());
                         },
                     }
                     
