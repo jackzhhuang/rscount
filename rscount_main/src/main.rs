@@ -5,9 +5,14 @@ use rsfile::rs_code_dir::RsCodeDir;
 use rsfile::rs_code_file::RsCodeFile;
 use std::error::Error;
 
-fn count_file(dir: &str) -> Result<(), Box<dyn Error>> {
+fn count_file(dir: &str, use_threads: bool) -> Result<(), Box<dyn Error>> {
     let mut rs_dir = RsCodeDir::new();
-    rs_dir.process_rs_dir(dir)?;
+
+    if use_threads {
+        rs_dir.process_rs_dir_in_multiple_thread(dir)?;
+    } else {
+        rs_dir.process_rs_dir(dir)?;
+    }
 
     println!("total line in directroy({}) is {}", dir, rs_dir.total_line);
 
@@ -24,7 +29,7 @@ fn accept_command() -> Result<Box<config::RsCountConfig>, Box<dyn Error>> {
 
 fn process_rsccount(config: Box<config::RsCountConfig>) -> Result<(), Box<dyn Error>> {
     if let Some(path_name) = &config.search_path {
-        count_file(&path_name)?;
+        count_file(&path_name, config.thread_pool.as_ref().unwrap().eq(&String::from("1")))?;
     }
 
     if let Some(file_name) = &config.search_file {

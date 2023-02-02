@@ -1,4 +1,5 @@
 use std::{error::Error, iter::Iterator};
+use rsthread_pool::rs_thread_pool::RsReceiver;
 
 // read rust source code file containing the content in line by line
 pub struct RsCodeFile {
@@ -83,5 +84,12 @@ impl RsCodeFile {
         }
 
         self.skip_comment(trim_line);
+    }
+}
+
+impl RsReceiver<String> for RsCodeFile {
+    fn process_message(&mut self, file_path: String) -> Result<(), Box<dyn Error>> {
+        self.process_rs_file(&file_path)?;
+        Ok(())
     }
 }

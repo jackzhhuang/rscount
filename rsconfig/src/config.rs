@@ -1,6 +1,7 @@
 pub struct RsCountConfig {
     pub search_path: Option<String>,
     pub search_file: Option<String>,
+    pub thread_pool: Option<String>,
 }
 
 impl RsCountConfig {
@@ -8,6 +9,7 @@ impl RsCountConfig {
         RsCountConfig {
             search_path: None,
             search_file: None,
+            thread_pool: None,
         }
     }
 
@@ -19,6 +21,10 @@ impl RsCountConfig {
 
            "file" => {
                 self.search_file = Some(value.to_string());
+           }
+
+           "thread" => {
+                self.thread_pool = Some(value.to_string());
            }
 
            _ => {
