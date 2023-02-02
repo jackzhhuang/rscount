@@ -14,10 +14,15 @@ fn count_file(dir: &str) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn accept_command() -> Result<(), Box<dyn Error>> {
-    let mut config = config::RsCountConfig::new();
+fn accept_command() -> Result<Box<config::RsCountConfig>, Box<dyn Error>> {
+    let mut config = Box::new(config::RsCountConfig::new());
     config.parse_commands(&std::env::args().collect::<Vec<String>>());
 
+    Ok(config)
+
+}
+
+fn process_rsccount(config: Box<config::RsCountConfig>) -> Result<(), Box<dyn Error>> {
     if let Some(path_name) = &config.search_path {
         count_file(&path_name)?;
     }
@@ -33,7 +38,7 @@ fn accept_command() -> Result<(), Box<dyn Error>> {
 }
 
 fn main()-> Result<(), Box<dyn Error>> {
-    accept_command()?;
+    process_rsccount(accept_command()?).unwrap();
 
     Ok(())
 }

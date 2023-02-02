@@ -3,6 +3,7 @@ members = [
     "rscount_main",
     "rsfile",
     "rsconfig",
+    "rsthread_pool",
 ]
 
 [profile.dev]
