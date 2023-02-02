@@ -9,12 +9,13 @@ fn count_file(dir: &str, use_threads: bool) -> Result<(), Box<dyn Error>> {
     let mut rs_dir = RsCodeDir::new();
 
     if use_threads {
+        rs_dir.set_up_pool()?;
         rs_dir.process_rs_dir_in_multiple_thread(dir)?;
+        rs_dir.join()?;
     } else {
         rs_dir.process_rs_dir(dir)?;
+        println!("total line in directroy({}) is {}", dir, rs_dir.total_line);
     }
-
-    println!("total line in directroy({}) is {}", dir, rs_dir.total_line);
 
     Ok(())
 }

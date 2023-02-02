@@ -16,16 +16,20 @@ impl RsCodeDir {
         }
     }
 
-    fn set_up_pool(&mut self) -> Result<(), Box<dyn Error>> {
+    pub fn set_up_pool(&mut self) -> Result<(), Box<dyn Error>> {
         self.thread_pool = Some(RsThreadPool::<String>::new());
         self.thread_pool.as_mut().unwrap().set_up_pool(|| {
             RsCodeFile::new()
         });
         Ok(())
     }
+    
+    pub fn join(self) -> Result<(), Box<dyn Error>> {
+        self.thread_pool.unwrap().join()?;
+        Ok(())
+    }
 
     pub fn process_rs_dir_in_multiple_thread(&mut self, path_name: &str) -> Result<(), Box<dyn Error>> {
-        self.set_up_pool()?;
 
         let path = Path::new(path_name);
 
@@ -34,7 +38,7 @@ impl RsCodeDir {
             let path = entry.path().canonicalize()?;
             let file_name = path.to_str().unwrap();
             if path.is_dir() {
-                self.process_rs_dir(file_name)?;
+                self.process_rs_dir_in_multiple_thread(file_name)?;
             } else {
                 if !file_name.ends_with(".rs") {
                     continue;
