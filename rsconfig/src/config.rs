@@ -34,11 +34,16 @@ impl RsCountConfig {
     }
 
     fn parse_one_command(&mut self, arg: &str) {
-        let first_eq = arg.find("=").expect("please use = to assign a value to an command.");
-        let command_name = &arg[0..first_eq];
-        let value = &arg[first_eq + 1..arg.len()];
+        let first_eq = arg.find("=");
+        if let None = &first_eq {
+            self.set_command(arg, "1");
+        } else {
+            let eq_index = first_eq.unwrap();
+            let command_name = &arg[0..eq_index];
+            let value = &arg[eq_index + 1..arg.len()];
 
-        self.set_command(command_name, value);
+            self.set_command(command_name, value);
+        }
     }
 
     pub fn parse_commands(&mut self, args: &[String]) {

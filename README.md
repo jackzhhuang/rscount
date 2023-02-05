@@ -56,5 +56,17 @@ It will find the Rust source files recursively in test_dir and sum up the valid 
 
 
 
-## Possibly, there are some other interesting and simple things we can do in the future
+### Count the lines using multiple thread
+
+If there are lots of Rust code files in the path, you can add *thread* in the parameters like this:
+
+```rust
+rscount path="./test_dir/" thread
+```
+
+It will count the lines using multiple threads and the number of the threads will be estimated by *std::thread::available_parallelism*.
+
+
+
+**Possibly, there are some other interesting and simple things we can do in the future**
 
