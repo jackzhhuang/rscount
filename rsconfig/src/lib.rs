@@ -1,4 +1,5 @@
 pub mod config;
+pub mod rs_count_config;
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right
