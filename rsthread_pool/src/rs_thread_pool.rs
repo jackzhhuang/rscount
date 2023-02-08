@@ -55,7 +55,7 @@ impl<MessageType: Send + 'static> RsThreadPool<MessageType> {
 
     pub fn set_up_pool<F, ProcessorType, CallbackType>(&mut self, 
                                          mut processor_maker: F, 
-                                         mut callback: &Arc<Mutex<CallbackType>>) -> Result<(), Box<dyn Error>> 
+                                         callback: &Arc<Mutex<CallbackType>>) -> Result<(), Box<dyn Error>> 
             where F: FnMut() -> ProcessorType,
                   F: 'static,
                   ProcessorType: RsReceiver<MessageType> + Send + 'static,
@@ -87,12 +87,12 @@ impl<MessageType: Send + 'static> RsThreadPool<MessageType> {
                                     }
                                     processor.process_message(message.message.unwrap()).unwrap();
                                 },
-                                Err(e) => {
+                                Err(_e) => {
                                     // dbg!("error: {}", e.to_string());
                                 },
                             }
                         },
-                        Err(e) => {
+                        Err(_e) => {
                             // dbg!("error: {}", e.to_string());
                         },
                     }

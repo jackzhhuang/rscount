@@ -59,7 +59,7 @@ impl RsCodeDir {
                 if !file_name.ends_with(".rs") {
                     continue;
                 }
-                self.thread_pool.as_mut().unwrap().send(String::from(file_name));
+                self.thread_pool.as_mut().unwrap().send(String::from(file_name))?;
             }
         }
 
